@@ -1,1 +1,67 @@
+# SubMon
 
+```
+            _____         _     ___  ___
+       /  ___|       | |    |  \/  |
+       \ `--.  _   _ | |__  | .  . |  ___   _ __
+        `--. \| | | || '_ \ | |\/| | / _ \ | '_ \
+       /\__/ /| |_| || |_) || |  | || (_) || | | |  version: 1.0
+       \____/  \__,_||_.__/ \_|  |_/ \___/ |_| |_|  author: @orleven
+
+```
+
+Submon is a SRC assistant tool that periodically scans subdomains and requests WEB services on port 80/443 to check if it is available. Use and send relevant data to the specified mailbox.
+
+[![Python 3.5](https://img.shields.io/badge/python-3.5-yellow.svg)](https://www.python.org/)
+
+![show](https://raw.githubusercontent.com/orleven/submon/master/show/test.png)
+
+### Install
+
+```
+pip3 install -r requirements.txt
+```
+
+### Usage
+
+1. First, set basic, smtp config in submon.conf
+
+```
+[basic]
+thread_num = 100 # The web request threads.
+looptimer = 60   # Scan subdomain every 60 seconds.
+...
+
+[smtp]
+mail_host = smtp.163.com
+mail_port = 25
+mail_user = username
+mail_pass = password
+sender = username@163.com
+receivers = username@qq.com,username@qq.com
+
+[proxy]
+proxy = False  # The setting of proxy
+http_proxy = http://127.0.0.1:1080
+https_proxy = https://127.0.0.1:1080
+
+[google_api]
+developer_key = developer_key   # Your developer key
+search_enging = search_enging   # Your search enging
+```
+
+2. Scan subdomian,
+```
+py -3 submon.py -d example.com
+py -3 submon.py -f domain.file
+```
+
+![show](https://raw.githubusercontent.com/orleven/submon/master/show/show.png)
+
+3. And then, wait for e-mail of result.
+
+![email](https://raw.githubusercontent.com/orleven/submon/master/show/email.png)
+
+4. Also, you can see all result in submon.db.
+
+![sqlitedb](https://raw.githubusercontent.com/orleven/submon/master/show/sqlitedb.png)
