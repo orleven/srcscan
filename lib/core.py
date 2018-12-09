@@ -161,4 +161,5 @@ def send_smtp(path,filename):
     except smtplib.SMTPException as e:
         logger.error("Error for SMTP: %s" %(type(e).__name__))
     except Exception as e:
+        logger.error(e)
         logger.error("Error for SMTP, please check SMTP' config in submon.conf.")
