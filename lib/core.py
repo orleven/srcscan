@@ -160,6 +160,7 @@ def send_smtp(path,filename):
         logger.sysinfo("SMTP send success.")
     except smtplib.SMTPException as e:
         logger.error("Error for SMTP: %s" %(type(e).__name__))
+        logger.error("Error for SMTP: %s" % (str(e)))
     except socket.timeout as e:
         logger.error("Timeout for SMTP.")
     except Exception as e:
