@@ -152,7 +152,8 @@ def send_smtp(path,filename):
         message.attach(att)
 
     try:
-        smtpObj = smtplib.SMTP( timeout = int(conf['config']['basic']['timeout']))
+        timeout = int(conf['config']['basic']['timeout'])
+        smtpObj = smtplib.SMTP( timeout = timeout)
         smtpObj.connect(mail_host, mail_port)
         smtpObj.login(mail_user, mail_pass)
         smtpObj.sendmail(sender, receivers, message.as_string())
