@@ -151,10 +151,12 @@ def send_smtp(path,filename):
         message.attach(att)
 
     try:
-        smtpObj = smtplib.SMTP()
-        smtpObj.connect(mail_host, mail_port)  # 25 为 SMTP 端口号
+        smtpObj = smtplib.SMTP(timeout = int(conf['config']['basic']['timeout']))
+        smtpObj.connect(mail_host, mail_port,time)
         smtpObj.login(mail_user, mail_pass)
         smtpObj.sendmail(sender, receivers, message.as_string())
         logger.sysinfo("SMTP send success.")
     except smtplib.SMTPException as e:
         logger.error("Error for SMTP: %s" %(type(e).__name__))
+    except Exception as e:
+        logger.error("Error for SMTP, please check SMTP' config in submon.conf" % (type(e).__name__))

@@ -23,12 +23,12 @@ pip3 install -r requirements.txt
 
 ### Usage
 
-1. First, set basic, smtp config in submon.conf
+1. First, set basic, smtp config in submon.conf, and the submon.conf file is created the first time you run it.
 
 ```
 [basic]
 thread_num = 100 # The web request threads.
-looptimer = 60   # Scan subdomain every 60 seconds.
+looptimer = 43200   # Scan subdomain every 43200 seconds.
 ...
 
 [smtp]

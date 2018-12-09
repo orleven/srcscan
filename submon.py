@@ -29,6 +29,7 @@ def arg_set(parser):
     parser.add_argument('-f', "--domain_file",metavar='File', type=str, default=None,help='Load domain from file (e.g. domains.txt)')
     parser.add_argument("--debug", action='store_true', help="Show debug info", default=False)
     parser.add_argument("--update", action='store_true', help="Update", default=False)
+    parser.add_argument("--help", help="Show help", default=False, action='store_true')
     return parser
 
 def handle(parser):
@@ -38,10 +39,13 @@ def handle(parser):
     config_parser()
     domains = []
     # asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
     if args.debug:
         debug = True
         logger.set_level(CUSTOM_LOGGING.DEBUG)
-    if args.domain:
+    if args.help:
+        parser.print_help()
+    elif args.domain:
         domain = check_domain(args.domain)
         if not domain:
             sys.exit(logger.error("Error domain: %s" % domain))
