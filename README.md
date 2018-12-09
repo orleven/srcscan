@@ -14,7 +14,6 @@ Submon is a SRC assistant tool that periodically scans subdomains and requests W
 
 [![Python 3.5](https://img.shields.io/badge/python-3.5-yellow.svg)](https://www.python.org/)
 
-![show](https://raw.githubusercontent.com/orleven/submon/master/show/test.png)
 
 ### Install
 
