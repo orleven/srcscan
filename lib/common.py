@@ -16,7 +16,7 @@ from lib.update import update_program
 
 def banner():
     banner = """
-            _____         _     ___  ___
+        _____         _     ___  ___
        /  ___|       | |    |  \/  |
        \ `--.  _   _ | |__  | .  . |  ___   _ __
         `--. \| | | || '_ \ | |\/| | / _ \ | '_ \\
