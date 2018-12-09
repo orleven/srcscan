@@ -131,6 +131,7 @@ def send_smtp(path,filename):
         logger.error("Load config error: smtp, please check the config in submon.conf.")
         return
 
+
     content = '''
     你好，
 
@@ -149,10 +150,10 @@ def send_smtp(path,filename):
         att["Content-Type"] = 'application/octet-stream'
         att.add_header("Content-Disposition", "attachment", filename=("utf-8", "", filename))
         message.attach(att)
-
+    # timeout = int(conf['config']['basic']['timeout'])
     try:
-        smtpObj = smtplib.SMTP(timeout = int(conf['config']['basic']['timeout']))
-        smtpObj.connect(mail_host, mail_port,time)
+        smtpObj = smtplib.SMTP()
+        smtpObj.connect(mail_host, mail_port)
         smtpObj.login(mail_user, mail_pass)
         smtpObj.sendmail(sender, receivers, message.as_string())
         logger.sysinfo("SMTP send success.")
