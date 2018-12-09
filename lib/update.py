@@ -17,17 +17,17 @@ def update_program():
     success = False
     path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if not os.path.exists(os.path.join(path, ".git")):
-        msg = "Have not a git repository. Please checkout the 'tentacle' repository "
+        msg = "Have not a git repository. Please checkout the 'submon' repository "
         msg += "from GitHub (e.g. 'git clone --depth 1 https://github.com/orleven/submon.git submon')"
         logger.error(msg)
     else:
-        msg = "Updating tentacle to the latest version from the gitHub repository."
+        msg = "Updating submon to the latest version from the gitHub repository."
         logger.sysinfo(msg)
 
-        msg = "Tentacle will try to update itself using 'git' command."
+        msg = "The submon will try to update itself using 'git' command."
         logger.sysinfo(msg)
 
-        logger.sysinfo("Tentacle will try to update itself using 'git' command.")
+        logger.sysinfo("Update in progress.")
 
     try:
         process = subprocess.Popen("git checkout . && git pull %s HEAD" % git_repository, shell=True,
@@ -45,7 +45,7 @@ def update_program():
         logger.success("The latest revision '%s'" % (get_revision_number()))
     else:
         if "Not a git repository" in stderr:
-            msg = "Not a valid git repository. Please checkout the 'orleven/tentacle' repository "
+            msg = "Not a valid git repository. Please checkout the 'orleven/submon' repository "
             msg += "from GitHub (e.g. 'git clone --depth 1 https://github.com/orleven/submon.git submon')"
             logger.error(msg)
         else:
