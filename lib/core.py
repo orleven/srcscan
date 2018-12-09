@@ -3,7 +3,7 @@
 __author__ = 'orleven'
 
 import os
-import sys
+import socket
 import asyncio
 import schedule
 import time
@@ -124,7 +124,7 @@ def send_smtp(path,filename):
         mail_port = int(conf['config']['smtp']['mail_port'])
         mail_user = conf['config']['smtp']['mail_user']
         mail_pass = conf['config']['smtp']['mail_pass']
-
+        timeout = int(conf['config']['basic']['timeout'])
         sender = conf['config']['smtp']['sender']
         receivers = conf['config']['smtp']['receivers'].split(',')
     except:
@@ -152,14 +152,15 @@ def send_smtp(path,filename):
         message.attach(att)
 
     try:
-        timeout = int(conf['config']['basic']['timeout'])
-        smtpObj = smtplib.SMTP( timeout = timeout)
+        socket.setdefaulttimeout(timeout)
+        smtpObj = smtplib.SMTP()
         smtpObj.connect(mail_host, mail_port)
         smtpObj.login(mail_user, mail_pass)
         smtpObj.sendmail(sender, receivers, message.as_string())
         logger.sysinfo("SMTP send success.")
     except smtplib.SMTPException as e:
         logger.error("Error for SMTP: %s" %(type(e).__name__))
+    except socket.timeout as e:
+        logger.error("Timeout for SMTP.")
     except Exception as e:
-        logger.error(e)
         logger.error("Error for SMTP, please check SMTP' config in submon.conf.")
