@@ -27,7 +27,7 @@ pip3 install -r requirements.txt
 
 ```
 [basic]
-thread_num = 100 # The web request threads.
+thread_num = 100    # Just for web status requests threads, not include subdomain scan.
 looptimer = 43200   # Scan subdomain every 43200 seconds.
 ...
 
