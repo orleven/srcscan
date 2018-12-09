@@ -33,7 +33,7 @@ looptimer = 43200   # Scan subdomain every 43200 seconds.
 
 [smtp]
 mail_host = smtp.163.com
-mail_port = 25
+mail_port = 465
 mail_user = username
 mail_pass = password
 sender = username@163.com
