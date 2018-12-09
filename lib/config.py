@@ -46,7 +46,7 @@ def init_conf(path):
         },
         "google_api": {
             "developer_key": "developer_key",
-            "search_enging": "developer_key"
+            "search_enging": "search_enging"
         },
         # 下面接口以后再说
         # "zoomeye_api": {
