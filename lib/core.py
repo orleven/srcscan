@@ -153,7 +153,7 @@ def send_smtp(path,filename):
 
     try:
         socket.setdefaulttimeout(timeout)
-        smtpObj = smtplib.SMTP()
+        smtpObj = smtplib.SMTP_SSL()
         smtpObj.connect(mail_host, mail_port)
         smtpObj.login(mail_user, mail_pass)
         smtpObj.sendmail(sender, receivers, message.as_string())
