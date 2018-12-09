@@ -51,6 +51,7 @@ def handle(parser):
             sys.exit(logger.error("Error domain: %s" % domain))
         logger.sysinfo("Loading and checking domain %s." % args.domain)
         domains.append(domain)
+        run(domains)
     elif args.domain_file:
         if os.path.isfile(args.domain_file):
             logger.sysinfo("Loading and checking domains of file %s." % args.domain_file)
@@ -60,12 +61,13 @@ def handle(parser):
                     if not domain:
                         logger.error("Error domain: %s" % domain)
                     domains.append(domain)
+                run(domains)
         else:
             logger.sysinfo("Error for domain file, please check the file %s." % args.domain_file)
     else:
         parser.print_help()
 
-    run(domains)
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='submon', epilog='submon',formatter_class=argparse.RawTextHelpFormatter, add_help=False)
