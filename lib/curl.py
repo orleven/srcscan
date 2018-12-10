@@ -134,5 +134,5 @@ class Curl():
             kwargs.setdefault('allow_redirects', False)
             return request('get', url, params=params, **kwargs)
         except Exception as e:
-            logger.error(type(e).__name__)
+            logger.error("Curl error [%s]: %s" %(type(e).__name__),url)
 
