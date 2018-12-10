@@ -85,12 +85,12 @@ class Curl():
                                         continue
                                     finally:
                                         if j + 1 == len(codes):
-                                            title = '[网页标题编码错误]'
+                                            title = '网页标题编码错误'
                                 self.ret.append([subdomain, url, title, res.status_code, length])
                                 flag = True
                                 break
                             else:
-                                title = '[网页标题编码错误]'
+                                title = '网页没有标题'
                                 self.ret.append(
                                     [subdomain, url, title, res.status_code,length])
                     if not flag:
