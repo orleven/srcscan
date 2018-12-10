@@ -57,7 +57,7 @@ class CrtSearchEngine(Engine):
                 self.logger.error("{engine_name} is not available, skipping!"
                                   .format(engine_name=self.engine_name))
                 return
-            self.logger.sysinfo("{engine_name} is available, starting!"
+            self.logger.debug("{engine_name} is available, starting!"
                              .format(engine_name=self.engine_name))
 
             url = self.format_base_url(self.target.netloc)
@@ -75,10 +75,10 @@ class CrtSearchEngine(Engine):
     def deal_with_errors(self,error_code):
         """subclass should override this function for identify security mechanism"""
         if error_code == ERROR.END:
-            self.logger.warning("{engine} has no results".format(engine=self.engine_name))
+            self.logger.debug("{engine} has no results".format(engine=self.engine_name))
         elif error_code == ERROR.UNKNOWN:
             # raise ReconResponseContentErrorException
             self.logger.error("response content error")
         elif error_code == ERROR.TIMEOUT:
-            self.logger.warning("{engine} is not available now, Stop!".format(engine=self.engine_name))
+            self.logger.debug("{engine} is not available now, Stop!".format(engine=self.engine_name))
 

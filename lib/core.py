@@ -53,7 +53,7 @@ def _run(domains):
         database.connect()
         database.init()
         for domain in domains:
-            logger.sysinfo("Scanning and checking domain %s." % domain.netloc)
+            logger.sysinfo("Scanning domain %s." % domain.netloc)
             _engines = [_(domain) for _ in engines.values()]
             loop = asyncio.get_event_loop()
             if debug:
@@ -68,21 +68,19 @@ def _run(domains):
             logger.sysinfo("Found %d subdomains of %s." % (len(ret),domain.netloc))
             for subdomain in ret:
                 database.insert_subdomain(subdomain,None,None,0,0,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),domain.netloc)
-            logger.sysinfo("Checking subdomains' status of %s." % domain.netloc)
 
             logger.sysinfo('Checking %d subdomains of %s.' % (len(ret),domain.netloc))
             curl = Curl()
             curl.load_targets(ret)
             for subdomain,url,title,status,content_length in curl.run():
                 database.update_subdomain_status(subdomain,url,title,status,content_length,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-            logger.sysinfo("Check subdomains' status of %s over." % domain.netloc)
-
+            logger.sysinfo("Checked subdomains' status of %s." % domain.netloc)
 
         datas = []
         path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
         if not os.path.exists(path):
             os.makedirs(path)
-        filename = ('SubMon_子域名检测_' + time.strftime("%Y%m%d_%H%M%S", time.localtime())) + '.xlsx'
+        filename = ('SubMon_subdomain_check_' + time.strftime("%Y%m%d_%H%M%S", time.localtime())) + '.xlsx'
         for domain in domains:
             for _row in database.select_mondomain(domain.netloc):
                 data = {
@@ -110,15 +108,14 @@ def _run(domains):
 
 def run(domains):
     _run(domains)
-    if len(domains) > 0:
-        _time =  int(conf['config']['basic']['looptimer'])
-        schedule.every(_time).seconds.do(_run,domains)
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
+    # if len(domains) > 0:
+    #     _time =  int(conf['config']['basic']['looptimer'])
+    #     schedule.every(_time).seconds.do(_run,domains)
+    #     while True:
+    #         schedule.run_pending()
+    #         time.sleep(1)
 
 def send_smtp(path,filename):
-
     try:
         mail_host = conf['config']['smtp']['mail_host']
         mail_port = int(conf['config']['smtp']['mail_port'])
@@ -159,7 +156,6 @@ def send_smtp(path,filename):
         smtpObj.sendmail(sender, receivers, message.as_string())
         logger.sysinfo("SMTP send success.")
     except smtplib.SMTPException as e:
-        logger.error("Error for SMTP: %s" %(type(e).__name__))
         logger.error("Error for SMTP: %s" % (str(e)))
     except socket.timeout as e:
         logger.error("Timeout for SMTP.")

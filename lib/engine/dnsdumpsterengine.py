@@ -79,7 +79,7 @@ class DNSdumpsterEngine(Engine):
                 self.logger.error("{engine_name} is not available, skipping!"
                                   .format(engine_name=self.engine_name))
                 return
-            self.logger.sysinfo("{engine_name} is available, starting!"
+            self.logger.debug("{engine_name} is available, starting!"
                              .format(engine_name=self.engine_name))
 
             self.logger.debug("{engine} {url}".format(engine=self.engine_name,url=self.base_url))

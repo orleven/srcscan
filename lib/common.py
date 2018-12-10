@@ -94,6 +94,8 @@ def tocsv(datalines,path,file):
                 elif isinstance(line[key], list):
                     ws.cell(row=i, column=titleList.index(key) + 1).value = str(line[key])
                 elif isinstance(line[key], dict):
+                    ws.cell(row=i, column=titleList.index(key) + 1).value = line[key]
+                elif isinstance(line[key], str):
                     ws.cell(row=i, column=titleList.index(key) + 1).value = str(line[key])
                 else:
                     ws.cell(row=i, column=titleList.index(key) + 1).value = "Types of printing are not supported."

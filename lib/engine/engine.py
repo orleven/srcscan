@@ -10,6 +10,8 @@ from random import choice
 from urllib import parse as urlparse
 from lib.data import logger
 from lib.data import conf
+
+
 class ERROR:
     END = 10000
     UNKNOWN = 100001
@@ -73,12 +75,9 @@ class Engine(object):
                     async with session.request(method,url,data=data,headers=headers,proxy=proxy['http']) as response:
                         return await response.text()
         except Exception as e:
-            logger.warning('fetch exception: {e} {u}'.format(e=type(e).__name__, u=url))
-            return None
-
-    def print_(self):
-        self.logger.sysinfo("Searching now in {engine_name}..".format(engine_name=self.engine_name))
-        return
+            if type(e).__name__ != 'TimeoutError':
+                logger.error('Fetch exception: {e} {u}'.format(e=type(e).__name__, u=url))
+                return None
 
     def extract(self,content):
         """subclass override this function for extracting domain from response"""
@@ -129,12 +128,12 @@ class Engine(object):
     def deal_with_errors(self,error_code):
         """subclass should override this function for identify security mechanism"""
         if error_code == ERROR.END:
-            self.logger.warning("{engine} has no results".format(engine=self.engine_name))
+            self.logger.debug("{engine} has no results".format(engine=self.engine_name))
         elif error_code == ERROR.UNKNOWN:
             self.logger.error("{engine} response content error!".format(engine=self.engine_name))
             # raise ReconResponseContentErrorException
         elif error_code == ERROR.TIMEOUT:
-            self.logger.warning("{engine} is not available now, Stop!".format(engine=self.engine_name))
+            self.logger.debug("{engine} is not available now, Stop!".format(engine=self.engine_name))
 
     async def run(self):
         async with aiohttp.ClientSession() as session:
@@ -143,7 +142,7 @@ class Engine(object):
                 self.logger.error("{engine_name} is not available, skipping!"
                                   .format(engine_name=self.engine_name))
                 return
-            self.logger.sysinfo("{engine_name} is available, starting!"
+            self.logger.debug("{engine_name} is available, starting!"
                              .format(engine_name=self.engine_name))
 
             self.generate_query()

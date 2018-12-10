@@ -43,7 +43,7 @@ class BugscannerEngine(Engine):
                 logger.error("{engine_name} is not available, skipping!"
                                   .format(engine_name=self.engine_name))
                 return
-            logger.sysinfo("{engine_name} is available, starting!"
+            logger.debug("{engine_name} is available, starting!"
                              .format(engine_name=self.engine_name))
 
             data = {

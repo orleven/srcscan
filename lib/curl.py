@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'orleven'
 
-import time
+import sys
 import random
 import traceback
 import threading
@@ -10,17 +10,21 @@ from bs4 import BeautifulSoup
 from lib.data import conf
 from collections import deque
 from lib.data import logger
-from requests.exceptions import ChunkedEncodingError, ConnectionError, ConnectTimeout,ReadTimeout
 from lib.engine.engine import default_headers
 from requests import request
 from requests import packages
+from requests.exceptions import ConnectionError
+from requests.exceptions import TooManyRedirects
+from requests.exceptions import ChunkedEncodingError
+from requests.exceptions import ConnectTimeout
+from requests.exceptions import ReadTimeout
 packages.urllib3.disable_warnings()
 
 class Curl():
     def __init__(self):
         self.targets = deque()
         self.ret = deque()
-        # self.put_queue_flag = True
+        self.type_code = sys.getfilesystemencoding()
         self.thread_count = self.thread_num = int(conf['config']['basic']['thread_num'])
         self.scanning_count = self.scan_count = self.found_count = self.error_count = self.total = 0
         self.is_continue = True
@@ -32,13 +36,16 @@ class Curl():
             self.targets.append(target)
 
     def run(self):
+        thread_list = []
         for i in range(0, self.thread_num):
             t = threading.Thread(target=self._work, name=str(i))
             t.setDaemon(True)
             t.start()
-            t.join()
-        return self.ret
+            thread_list.append(t)
+        for _thread in thread_list:
+            _thread.join()
 
+        return self.ret
 
     def _work(self):
         while True:
@@ -64,15 +71,18 @@ class Curl():
                                 if title == None or title.string == None or title.string == '':
                                     title = "网页没有标题".encode('utf-8')
                                 else:
-                                    title = title.string.encode(res.encoding)
-                                codes.append(res.encoding)
-                                codes.append(type)
+                                    if res.encoding!= None:
+                                        title = title.string.encode(res.encoding)
+                                        codes.append(res.encoding)
+                                    else:
+                                        title = title.string
+                                codes.append(self.type_code)
                                 for j in range(0, len(codes)):
                                     try:
                                         title = title.decode(codes[j]).strip().replace("\r", "").replace("\n", "")
                                         break
                                     except:
-                                        pass
+                                        continue
                                     finally:
                                         if j + 1 == len(codes):
                                             title = '[网页标题编码错误]'
@@ -117,12 +127,12 @@ class Curl():
         try:
             return request('get', url, params=params, **kwargs)
         except ConnectionError as e:
-            # logger.error("ConnectionError: %s" % url)
             return None
         except ReadTimeout as e:
-            # logger.error("ReadTimeout: %s" % url)
             return None
+        except TooManyRedirects as e:
+            kwargs.setdefault('allow_redirects', False)
+            return request('get', url, params=params, **kwargs)
         except Exception as e:
-            logger.error("Curl error: %s" % url)
-            return None
+            logger.error(type(e).__name__)
 

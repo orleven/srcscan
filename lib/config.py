@@ -16,7 +16,7 @@ def init_conf(path):
         "basic": {
             "thread_num": "100",
             "looptimer": str(12*60*60),
-            "timeout": "20",
+            "timeout": "5",
             "user_agent": '\n'.join([
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36",
                 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.3) Gecko/20100401 Firefox/3.0.16 (.NET CLR 3.5.30729)',
