@@ -70,7 +70,7 @@ def handle(parser):
 
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='submon', epilog='submon',formatter_class=argparse.RawTextHelpFormatter, add_help=False)
+    parser = argparse.ArgumentParser(description='Submon is a SRC assistant tool that periodically scans subdomains and requests WEB services on port 80/443 to check if it is available, and send result to you by e-mail.',formatter_class=argparse.RawTextHelpFormatter, add_help=False)
     parser = arg_set(parser)
     handle(parser)
 

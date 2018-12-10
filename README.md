@@ -10,7 +10,7 @@
 
 ```
 
-Submon is a SRC assistant tool that periodically scans subdomains and requests WEB services on port 80/443 to check if it is available. Use and send relevant data to the specified mailbox.
+Submon is a SRC assistant tool that periodically scans subdomains and requests WEB services on port 80/443 to check if it is available, and send result to you by e-mail.
 
 [![Python 3.5](https://img.shields.io/badge/python-3.5-yellow.svg)](https://www.python.org/)
 
