@@ -108,12 +108,12 @@ def _run(domains):
 
 def run(domains):
     _run(domains)
-    # if len(domains) > 0:
-    #     _time =  int(conf['config']['basic']['looptimer'])
-    #     schedule.every(_time).seconds.do(_run,domains)
-    #     while True:
-    #         schedule.run_pending()
-    #         time.sleep(1)
+    if len(domains) > 0:
+        _time =  int(conf['config']['basic']['looptimer'])
+        schedule.every(_time).seconds.do(_run,domains)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
 
 def send_smtp(path,filename):
     try:
