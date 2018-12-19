@@ -135,7 +135,7 @@ class Curl():
             try:
                 return request('get', url, params=params, **kwargs)
             except Exception as e:
-                logger.error("Curl error [%s]: %s" % (type(e).__name__), url)
+                logger.error("Curl error: %s" %  url)
         except Exception as e:
-            logger.error("Curl error [%s]: %s" %(type(e).__name__),url)
+            logger.error("Curl error: %s" %url)
 
