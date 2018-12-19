@@ -98,6 +98,8 @@ def tocsv(datalines,path,file,key = 'Mysheet'):
             try:
                 if isinstance(line[key], int) or isinstance(line[key], str):
                     ws.cell(row=i, column=titleList.index(key) + 1).value = line[key]
+                elif isinstance(line[key], bytes) :
+                    ws.cell(row=i, column=titleList.index(key) + 1).value = str(line[key],'utf-8')
                 elif isinstance(line[key], list):
                     ws.cell(row=i, column=titleList.index(key) + 1).value = str(line[key])
                 elif isinstance(line[key], dict):
