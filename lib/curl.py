@@ -132,7 +132,10 @@ class Curl():
             return None
         except TooManyRedirects as e:
             kwargs.setdefault('allow_redirects', False)
-            return request('get', url, params=params, **kwargs)
+            try:
+                return request('get', url, params=params, **kwargs)
+            except Exception as e:
+                logger.error("Curl error [%s]: %s" % (type(e).__name__), url)
         except Exception as e:
             logger.error("Curl error [%s]: %s" %(type(e).__name__),url)
 

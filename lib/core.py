@@ -146,16 +146,19 @@ def send_smtp(path,filename):
         att.add_header("Content-Disposition", "attachment", filename=("utf-8", "", filename))
         message.attach(att)
 
-    try:
-        socket.setdefaulttimeout(timeout)
-        smtpObj = smtplib.SMTP_SSL()
-        smtpObj.connect(mail_host, mail_port)
-        smtpObj.login(mail_user, mail_pass)
-        smtpObj.sendmail(sender, receivers, message.as_string())
-        logger.sysinfo("SMTP send success.")
-    except smtplib.SMTPException as e:
-        logger.error("Error for SMTP: %s" % (str(e)))
-    except socket.timeout as e:
-        logger.error("Timeout for SMTP.")
-    except Exception as e:
-        logger.error("Error for SMTP, please check SMTP' config in submon.conf.")
+    while True:
+        try:
+            socket.setdefaulttimeout(timeout)
+            smtpObj = smtplib.SMTP_SSL()
+            smtpObj.connect(mail_host, mail_port)
+            smtpObj.login(mail_user, mail_pass)
+            smtpObj.sendmail(sender, receivers, message.as_string())
+            logger.sysinfo("SMTP send success.")
+            break
+        except smtplib.SMTPException as e:
+            logger.error("Error for SMTP: %s" % (str(e)))
+        except socket.timeout as e:
+            logger.error("Timeout for SMTP.")
+        except Exception as e:
+            logger.error("Error for SMTP, please check SMTP' config in submon.conf.")
+        time.sleep(10)

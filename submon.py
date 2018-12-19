@@ -70,7 +70,7 @@ def handle(parser):
                             continue
                         domains_dic[os.path.basename(domain_file)].append(domain)
             run(domains_dic,nomal)
-        if os.path.isfile(args.domain_file):
+        elif os.path.isfile(args.domain_file):
             domains_dic[os.path.basename(args.domain_file)] = []
             logger.sysinfo("Loading and checking domains of file %s." % args.domain_file)
             with open(args.domain_file, 'r') as f:
