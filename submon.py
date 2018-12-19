@@ -54,7 +54,7 @@ def handle(parser):
         if not domain:
             sys.exit(logger.error("Error domain: %s" % domain))
         logger.sysinfo("Loading and checking domain %s." % args.domain)
-        domains_dic[domain]=[domain]
+        domains_dic[domain.netloc]=[domain]
         run(domains_dic,nomal)
     elif args.domain_file:
         if os.path.isdir(args.domain_file):
