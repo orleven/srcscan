@@ -6,7 +6,7 @@ import time
 import os
 import re
 import sys
-
+from openpyxl import load_workbook
 from openpyxl import Workbook
 from urllib import parse
 from lib.data import logger
@@ -75,11 +75,18 @@ def check_update(args):
         update_program()
         sys.exit(0)
 
-def tocsv(datalines,path,file):
+def tocsv(datalines,path,file,key = 'Mysheet'):
     filename = os.path.join(path,file)
     logger.info('Export to %s...' % (filename))
-    book = Workbook()
-    ws = book.active
+    if os.path.isfile(filename):
+        book = load_workbook(filename=filename)
+    else:
+        book = Workbook()
+        book.remove(book.active)
+    if key not in book.sheetnames:
+        ws = book.create_sheet(key)
+    else:
+        ws = book.get_sheet_by_name(key)
     i = 1
     titleList = []
     for line in datalines:
@@ -103,5 +110,3 @@ def tocsv(datalines,path,file):
                 ws.cell(row=i, column=titleList.index(key) + 1).value = "Some error."
     book.save(filename)
     logger.sysinfo('Exported to %s successful!' % (filename))
-
-#

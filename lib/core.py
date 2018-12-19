@@ -46,74 +46,72 @@ engines = {
     'bugscanner': BugscannerEngine,
 }
 
-def _run(domains):
-    if len(domains) > 0:
-        logger.sysinfo("Scanning %d domains at %s." % (len(domains), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        database = Database(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'submon.db'))
-        database.connect()
-        database.init()
-        for domain in domains:
-            logger.sysinfo("Scanning domain %s." % domain.netloc)
-            _engines = [_(domain) for _ in engines.values()]
-            loop = asyncio.get_event_loop()
-            if debug:
-                loop.set_debug(True)
-            for task in [asyncio.ensure_future(_engine.run()) for _engine in _engines ]:
-                loop.run_until_complete(task)
-            # loop.close()
-            ret = set()
-            for _engine in _engines:
-                ret.update(_engine.subdomains)
+def _run(domains_dic):
+    database = Database(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'submon.db'))
+    database.connect()
+    database.init()
+    filename = ('SubMon_subdomain_check_' + time.strftime("%Y%m%d_%H%M%S", time.localtime())) + '.xlsx'
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+    if not os.path.exists(path):
+        os.makedirs(path)
+    for key in domains_dic.keys():
+        domains = list(set(domains_dic[key]))
+        if len(domains) > 0:
+            logger.sysinfo("Scanning %d domains at %s." % (len(domains), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            for domain in domains:
+                logger.sysinfo("Scanning domain %s." % domain.netloc)
+                _engines = [_(domain) for _ in engines.values()]
+                loop = asyncio.get_event_loop()
+                if debug:
+                    loop.set_debug(True)
+                for task in [asyncio.ensure_future(_engine.run()) for _engine in _engines ]:
+                    loop.run_until_complete(task)
+                # loop.close()
+                ret = set()
+                for _engine in _engines:
+                    ret.update(_engine.subdomains)
 
-            logger.sysinfo("Found %d subdomains of %s." % (len(ret),domain.netloc))
-            for subdomain in ret:
-                database.insert_subdomain(subdomain,None,None,0,0,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),domain.netloc)
+                logger.sysinfo("Found %d subdomains of %s." % (len(ret),domain.netloc))
+                for subdomain in ret:
+                    database.insert_subdomain(subdomain,None,None,0,0,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),domain.netloc)
 
-            logger.sysinfo('Checking %d subdomains of %s.' % (len(ret),domain.netloc))
-            curl = Curl()
-            curl.load_targets(ret)
-            for subdomain,url,title,status,content_length in curl.run():
-                database.update_subdomain_status(subdomain,url,title,status,content_length,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-            logger.sysinfo("Checked subdomains' status of %s." % domain.netloc)
+                logger.sysinfo('Checking %d subdomains of %s.' % (len(ret),domain.netloc))
+                curl = Curl()
+                curl.load_targets(ret)
+                for subdomain,url,title,status,content_length in curl.run():
+                    database.update_subdomain_status(subdomain,url,title,status,content_length,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+                logger.sysinfo("Checked subdomains' status of %s." % domain.netloc)
+            datas = []
+            for domain in domains:
+                for _row in database.select_mondomain(domain.netloc):
+                    data = {
+                        "subdomain": _row[0],
+                        "url": _row[1],
+                        "title": _row[2],
+                        "status": _row[3],
+                        "len": _row[4],
+                        "update_time" : _row[5],
+                        "domain": _row[6]
+                    }
+                    datas.append(data)
+            tocsv(datas, path,filename,key)
+            logger.sysinfo("Fineshed scan %d domains at %s." % (len(domains), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        else:
+            logger.error("Loading %d domains." % (len(domains)))
+    send_smtp(path, filename)
+    database.disconnect()
+    print()
+    print()
 
-        datas = []
-        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
-        if not os.path.exists(path):
-            os.makedirs(path)
-        filename = ('SubMon_subdomain_check_' + time.strftime("%Y%m%d_%H%M%S", time.localtime())) + '.xlsx'
-        for domain in domains:
-            for _row in database.select_mondomain(domain.netloc):
-                data = {
-                    "subdomain": _row[0],
-                    "url": _row[1],
-                    "title": _row[2],
-                    "status": _row[3],
-                    "len": _row[4],
-                    "update_time" : _row[5],
-                    "domain": _row[6]
-                }
-                datas.append(data)
-        tocsv(datas, path,filename)
-        send_smtp(path,filename)
-        database.disconnect()
-        logger.sysinfo("Fineshed scan %d domains at %s." % (len(domains), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        print()
-        print()
-        print()
-        print()
-    else:
-        logger.error("Loading %d domains." % (len(domains)))
-
-
-
-def run(domains):
-    _run(domains)
-    if len(domains) > 0:
-        _time =  int(conf['config']['basic']['looptimer'])
-        schedule.every(_time).seconds.do(_run,domains)
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
+def run(domains_dic,nomal):
+    _run(domains_dic)
+    if nomal:
+        if len(domains_dic) > 0:
+            _time =  int(conf['config']['basic']['looptimer'])
+            schedule.every(_time).seconds.do(_run,domains_dic)
+            while True:
+                schedule.run_pending()
+                time.sleep(1)
 
 def send_smtp(path,filename):
     try:
