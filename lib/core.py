@@ -105,7 +105,7 @@ def _run(domains_dic):
 
 def run(domains_dic,nomal):
     _run(domains_dic)
-    if nomal:
+    if not nomal:
         if len(domains_dic) > 0:
             _time =  int(conf['config']['basic']['looptimer'])
             schedule.every(_time).seconds.do(_run,domains_dic)
