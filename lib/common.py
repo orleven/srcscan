@@ -96,7 +96,9 @@ def tocsv(datalines,path,file,key = 'Mysheet'):
                 titleList.append(key)
                 ws.cell(row=1, column=len(titleList)).value = key
             try:
-                if isinstance(line[key], int) or isinstance(line[key], str):
+                if line[key] == None or line[key] == '':
+                    ws.cell(row=i, column=titleList.index(key) + 1).value = ""
+                elif isinstance(line[key], int) or isinstance(line[key], str):
                     ws.cell(row=i, column=titleList.index(key) + 1).value = line[key]
                 elif isinstance(line[key], bytes) :
                     ws.cell(row=i, column=titleList.index(key) + 1).value = str(line[key],'utf-8')
@@ -104,8 +106,6 @@ def tocsv(datalines,path,file,key = 'Mysheet'):
                     ws.cell(row=i, column=titleList.index(key) + 1).value = str(line[key])
                 elif isinstance(line[key], dict):
                     ws.cell(row=i, column=titleList.index(key) + 1).value = line[key]
-                elif isinstance(line[key], None):
-                    ws.cell(row=i, column=titleList.index(key) + 1).value = ""
                 else:
                     ws.cell(row=i, column=titleList.index(key) + 1).value = "Types of printing are not supported."
             except:
