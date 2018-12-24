@@ -10,7 +10,6 @@ from bs4 import BeautifulSoup
 from lib.data import conf
 from collections import deque
 from lib.data import logger
-from lib.engine.engine import default_headers
 from requests import request
 from requests import packages
 from requests.exceptions import ConnectionError
@@ -59,7 +58,18 @@ class Curl():
                     codes = ['utf-8', 'gbk']
                     for pro in ['http://', "https://"]:
                         url = pro + subdomain + '/'
-                        res = self._curl(url,headers = default_headers)
+                        headers = {
+                            'Connection': 'keep-alive',
+                            'Pragma': 'no-cache',
+                            'Cache-Control': 'no-cache',
+                            'Upgrade-Insecure-Requests': '1',
+                            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                            'DNT': '1',
+                            'Accept-Encoding': 'gzip, deflate',
+                            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
+                        }
+                        res = self._curl(url,headers = headers)
                         if res != None:
                             try:
                                 length = int(res.headers['content-length'])

@@ -2,24 +2,29 @@
 # -*- coding: utf-8 -*-
 __author__ = 'orleven'
 
-import json,re,execjs,asyncio,aiohttp
 import re
-from random import randint
+import json
+import asyncio
+import execjs
+import aiohttp
 from urllib import parse
+from random import randint
 from lib.data import logger
-from lib.engine.engine import ERROR
-from lib.engine.engine import Engine
+from lib.enums import SEARCH_ERROR
+from lib.engine.searchengine import SearchEngine
 
-class ThreatCrowdEngine(Engine):
+class ThreatCrowdEngine(SearchEngine):
     """need a proxy"""
-    def __init__(self,target,random=True,proxy=False):
+    def __init__(self,target,engine_name="ThreatCrowd_Domain", **kwargs):
         self.engine = "https://www.threatcrowd.org"
         self.base_url = 'https://www.threatcrowd.org/searchApi/v2/domain/report/?domain={domain}'
         super(ThreatCrowdEngine, self)\
-            .__init__(target, engine_name="ThreatCrowd",random=random, proxy=proxy)
+            .__init__(target, engine_name=engine_name, **kwargs)
+
         self.headers['referer'] = "https://www.threatcrowd.org/" \
                                   "searchApi/v2/domain/report/?domain={domain}"\
-                                    .format(domain=self.target.netloc)
+                                    .format(domain=self.target)
+
 
 
     def format_base_url(self, *args):
@@ -27,20 +32,21 @@ class ThreatCrowdEngine(Engine):
 
     def check_response_errors(self,content):
         if not content:
-            return [False, ERROR.TIMEOUT]
+            return [False, SEARCH_ERROR.TIMEOUT]
         if '"response_code":"0"' in content:
-            return [False,ERROR.END]
+            return [False,SEARCH_ERROR.END]
         elif '"response_code":"1"' in content:
             return [True,0]
         else:
-            return [False,ERROR.UNKNOWN]
+            return [False,SEARCH_ERROR.UNKNOWN]
 
     def extract(self,content):
         try:
             subdomains = json.loads(content)['subdomains']
-            self.subdomains.update(subdomains)
+            for subdomain in subdomains:
+                self.results['subdomain'].append(subdomain)
             self.logger.debug("{engine} Found {num} subdomains"
-                             .format(engine=self.engine_name,num=len(self.subdomains)))
+                             .format(engine=self.engine_name,num=len(self.results['subdomain'])))
         except Exception:
             pass
 
@@ -78,7 +84,7 @@ class ThreatCrowdEngine(Engine):
 
 
     async def check_engine_available(self,session,engine):
-        content = await self.get(session, engine, headers=self.headers, proxy=self.proxy)
+        content = await self.get(session, engine)
         if content:
             try:
                 self.extract_pass(content)
@@ -91,7 +97,7 @@ class ThreatCrowdEngine(Engine):
 
     async def run(self):
         async with aiohttp.ClientSession() as session:
-            url = self.format_base_url(self.target.netloc)
+            url = self.format_base_url(self.target)
             url = await self.check_engine_available(session,url)
             if not url:
                 self.logger.error("{engine_name} is not available, skipping!"
@@ -101,7 +107,8 @@ class ThreatCrowdEngine(Engine):
                              .format(engine_name=self.engine_name))
             await self.should_sleep()
             self.logger.debug("{engine} {url}".format(engine=self.engine_name,url=url))
-            content = await self.get(session, url, headers=self.headers, proxy=self.proxy,timeout=20)
+            content = await self.get(session, url)
+
 
             ret = self.check_response_errors(content)
             if not ret[0]:
@@ -109,4 +116,4 @@ class ThreatCrowdEngine(Engine):
                 return
 
             self.extract(content)
-            self.logger.debug(self.engine_name + " " + str(len(self.subdomains)))
+            self.logger.debug(self.engine_name + " " + str(len(self.results['subdomain'])))

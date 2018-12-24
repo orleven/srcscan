@@ -3,6 +3,7 @@
 __author__ = 'orleven'
 
 import time
+import random
 import os
 import re
 import sys
@@ -13,6 +14,11 @@ from lib.data import logger
 from lib.config import load_conf
 from lib.config import init_conf
 from lib.update import update_program
+
+
+def random_IP():
+    return '.'.join([str(random.randint(0, 255)) for x in range(0,4)])
+
 
 def banner():
     banner = """
@@ -42,7 +48,7 @@ def check_domain(url):
     if not url.startswith('http://') and not url.startswith('https://'):
         url = 'http://' + url
 
-    return parse.urlparse(url)
+    return parse.urlparse(url).netloc
 
 
 def get_safe_ex_string(ex, encoding=None):

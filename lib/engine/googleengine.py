@@ -2,38 +2,40 @@
 # -*- coding: utf-8 -*-
 __author__ = 'orleven'
 
-
-import re,asyncio
+import re
 import json
-from random import randint
+import asyncio
 import aiohttp
 from urllib import parse
+from random import randint
 from lib.data import logger
 from lib.data import conf
-from lib.engine.engine import ERROR
-from lib.engine.engine import Engine
-class GoogleEngine(Engine):
+from lib.enums import SEARCH_ERROR
+from lib.engine.searchengine import SearchEngine
 
-    def __init__(self,target,random=True,proxy=False):
+class GoogleEngine(SearchEngine):
+
+    def __init__(self,target,engine_name="Google_Domain", **kwargs):
         self.max_pageno= 20
         self.engine = "https://www.googleapis.com/"
         self.base_url = 'https://www.googleapis.com/customsearch/v1?cx={search_enging}&key={developer_key}&num=10&start={page_no}&q={query}'
         self.find_new_domain = False
+
         super(GoogleEngine,self)\
-            .__init__(target,engine_name="Google",random=random,proxy=proxy)
+            .__init__(target, engine_name=engine_name, **kwargs)
 
 
     def generate_query(self):
         if self.check_max_pageno(): return
-        length = len(self.subdomains)
+        length = len(self.results['subdomain'])
 
         if length==0:
-            query = "site:{domain}".format(domain=self.target.netloc)
+            query = "site:{domain}".format(domain=self.target)
             self.queries.append((query,0))
-            self.subdomains.update(["www." + self.target.netloc])  # 防止 一直请求第一个页面
+            self.results['subdomain'].append("www." + self.target)  # 防止 一直请求第一个页面
         elif self.find_new_domain:
-            found = ' -site:'.join(list(self.subdomains))
-            query = "site:{domain} -site:{found}".format(domain=self.target.netloc, found=found)
+            found = ' -site:'.join([x for x in self.results['subdomain']])
+            query = "site:{domain} -site:{found}".format(domain=self.target, found=found)
             self.queries.append((query, 0))
         else:
             self.queries.append((self.pre_query,self.pre_pageno+1))
@@ -47,16 +49,16 @@ class GoogleEngine(Engine):
 
     def check_response_errors(self,content):
         if not content:
-            return [False, ERROR.TIMEOUT]
+            return [False, SEARCH_ERROR.TIMEOUT]
         try:
             res_json = json.loads(content)
             num = int(res_json.get('searchInformation').get('totalResults'))
             if num == 0  :
-                return [False, ERROR.END]
+                return [False, SEARCH_ERROR.END]
             elif num > 0:
                 return [True, 0]
         except Exception as e:
-            return [False, ERROR.UNKNOWN]
+            return [False, SEARCH_ERROR.UNKNOWN]
 
 
     def extract(self,content):
@@ -69,12 +71,12 @@ class GoogleEngine(Engine):
                 if not link.startswith('http://') and not link.startswith('https://'):
                     link = "http://" + link
                 subdomain = parse.urlparse(link).netloc
-                if subdomain != self.target.netloc and subdomain.endswith(self.target.netloc):
-                    if subdomain not in self.subdomains:
+                if subdomain != self.target and subdomain.endswith(self.target):
+                    if subdomain not in self.results['subdomain']:
                         self.logger.debug(
                         "{engine} Found {subdomain}".format(
                                 engine=self.engine_name,subdomain=subdomain))
-                        self.subdomains.update([subdomain])
+                        self.results['subdomain'].append( subdomain)
                         self.find_new_domain = True
         except:
             return False
@@ -105,7 +107,7 @@ class GoogleEngine(Engine):
                 url = self.format_base_url(query, self.pre_pageno, search_enging, developer_key)
                 self.logger.debug("{engine} {url}".format(engine=self.engine_name, url=url))
 
-                content = await self.get(session, url, headers=self.headers, timeout=self.timeout, proxy=self.proxy)
+                content = await self.get(session, url)
                 ret = self.check_response_errors(content)
                 if not ret[0]:
                     self.deal_with_errors(ret[1])
@@ -115,4 +117,4 @@ class GoogleEngine(Engine):
                     self.generate_query()
                 if len(self.queries) > 0:
                     await self.should_sleep()  # avoid being blocked
-                self.logger.debug("%s for %s: %d" % (self.engine_name, self.target.netloc, len(self.subdomains)))
+                self.logger.debug("%s for %s: %d" % (self.engine_name, self.target, len(self.results['subdomain'])))

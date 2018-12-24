@@ -59,7 +59,7 @@ def _run(domains_dic):
         if len(domains) > 0:
             logger.sysinfo("Scanning %d domains at %s." % (len(domains), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
             for domain in domains:
-                logger.sysinfo("Scanning domain %s." % domain.netloc)
+                logger.sysinfo("Scanning domain %s." % domain)
                 _engines = [_(domain) for _ in engines.values()]
                 loop = asyncio.get_event_loop()
                 if debug:
@@ -69,21 +69,21 @@ def _run(domains_dic):
                 # loop.close()
                 ret = set()
                 for _engine in _engines:
-                    ret.update(_engine.subdomains)
+                    ret.update(_engine.results['subdomain'])
 
-                logger.sysinfo("Found %d subdomains of %s." % (len(ret),domain.netloc))
+                logger.sysinfo("Found %d subdomains of %s." % (len(ret),domain))
                 for subdomain in ret:
-                    database.insert_subdomain(subdomain,None,None,0,0,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),domain.netloc)
+                    database.insert_subdomain(subdomain,None,None,0,0,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),domain)
 
-                logger.sysinfo('Checking %d subdomains of %s.' % (len(ret),domain.netloc))
+                logger.sysinfo('Checking %d subdomains of %s.' % (len(ret),domain))
                 curl = Curl()
                 curl.load_targets(ret)
                 for subdomain,url,title,status,content_length in curl.run():
                     database.update_subdomain_status(subdomain,url,title,status,content_length,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-                logger.sysinfo("Checked subdomains' status of %s." % domain.netloc)
+                logger.sysinfo("Checked subdomains' status of %s." % domain)
             datas = []
             for domain in domains:
-                for _row in database.select_mondomain(domain.netloc):
+                for _row in database.select_mondomain(domain):
                     data = {
                         "subdomain": _row[0],
                         "url": _row[1],

@@ -2,23 +2,20 @@
 # -*- coding: utf-8 -*-
 __author__ = 'orleven'
 
-import backoff as backoff
-import asyncio
-import async_timeout
-from random import randint
 import re
-import aiohttp
+import asyncio
 import execjs
-from urllib import parse
-from lib.data import logger
-from lib.engine.engine import ERROR
-from lib.engine.engine import Engine
+import aiohttp
 from yarl import URL
-from lib.engine.engine import default_headers
+from urllib import parse
+from random import randint
+from lib.data import logger
+from lib.enums import SEARCH_ERROR
+from lib.engine.searchengine import SearchEngine
 
-class NetcraftEngine(Engine):
+class NetcraftEngine(SearchEngine):
 
-    def __init__(self,target,random=True,proxy=False):
+    def __init__(self,target,engine_name="Netcraft_Domain", **kwargs):
         self.engine = "https://searchdns.netcraft.com/"
         self.base_url = 'https://searchdns.netcraft.com/' \
                         '?restriction=site+ends+with&host={domain}' \
@@ -34,26 +31,26 @@ class NetcraftEngine(Engine):
         self.last_domain = ''
         self.find_new_domain = False
         super(NetcraftEngine, self)\
-            .__init__(target, engine_name="Netcraft",random=random, proxy=proxy,timeout=50)
+            .__init__(target, engine_name=engine_name, **kwargs)
 
     def extract(self, content):
         next_page = re.compile('<A.*?>\s*<b>Next page</b>\s*</a>')
         pattern = re.compile('<a href="http[s]*://(.*{domain}).*?" rel="nofollow">'
-                             .format(domain=self.target.netloc))
+                             .format(domain=self.target))
         try:
             links = pattern.findall(content)
-            self.last_domain=self.target.netloc
+            self.last_domain=self.target
             for link in links:
                 if not link.startswith('http://') and not link.startswith('https://'):
                     link = "http://" + link
                 subdomain = parse.urlparse(link).netloc
 
-                if subdomain != self.target.netloc and subdomain.endswith(self.target.netloc):
-                    if subdomain not in self.subdomains:
+                if subdomain != self.target and subdomain.endswith(self.target):
+                    if subdomain not in self.results['subdomain']:
                         self.logger.debug(
                         "{engine} Found {subdomain}".format(
                                 engine=self.engine_name,subdomain=subdomain))
-                        self.subdomains.update([subdomain])
+                        self.results['subdomain'].append(subdomain)
                 self.last_domain = subdomain
         except Exception:
             pass
@@ -65,27 +62,27 @@ class NetcraftEngine(Engine):
 
     def check_response_errors(self,content):
         if not content:
-            return [False, ERROR.TIMEOUT]
+            return [False, SEARCH_ERROR.TIMEOUT]
         pattern = re.compile('Found (\d*) site')
         ret = pattern.findall(content)
         if ret:
             if int(ret[0]) == 0:
-                return [False, ERROR.END]
+                return [False, SEARCH_ERROR.END]
             else:
                 return [True, 0]
         else:
-            return [False,ERROR.UNKNOWN]
+            return [False,SEARCH_ERROR.UNKNOWN]
 
     def generate_query(self):
-        length = len(self.subdomains)
-        query = self.target.netloc
+        length = len(self.results['subdomain'])
+        query = self.target
         if length==0:
             self.queries.append((query,0))
         else:
             self.queries.append((query,self.pre_pageno+1))
 
     def format_base_url(self, *args):
-        if self.last_domain == self.target.netloc or not self.last_domain:
+        if self.last_domain == self.target or not self.last_domain:
             self.last_domain = ''
         return self.base_url.format(domain=args[0],last_domain=self.last_domain,page_no=args[1]*20+1)
 
@@ -96,7 +93,7 @@ class NetcraftEngine(Engine):
     async def run(self):
         # cookies = {'netcraft_js_verification_response': ''}
         async with aiohttp.ClientSession() as session:
-            flag = await self.get(session,self.engine,timeout=self.timeout,proxy=self.proxy)
+            flag = await self.get(session,self.engine)
             if not flag:
                 self.logger.error("{engine_name} is not available, skipping!"
                                   .format(engine_name=self.engine_name))
@@ -106,7 +103,7 @@ class NetcraftEngine(Engine):
             try:
                 filtered = session.cookie_jar.filter_cookies(self.engine)
                 netcraft_js_verification_challenge = filtered['netcraft_js_verification_challenge'].value
-                _js = await self.get(session,self.js_url, timeout=self.timeout, proxy=self.proxy)
+                _js = await self.get(session,self.js_url)
                 cont_js = (_js + self.js_function.replace("{{netcraft_js_verification_challenge}}",netcraft_js_verification_challenge))
                 s = execjs.compile(cont_js)
                 netcraft_js_verification_response = s.call('get_netcraft_js_verification_response')
@@ -126,7 +123,7 @@ class NetcraftEngine(Engine):
                 self.pre_query = query
                 url = self.format_base_url(query,self.pre_pageno)
                 self.logger.debug("{engine} {url}".format(engine=self.engine_name,url=url))
-                content = await self.get(session,url,timeout=self.timeout,proxy=self.proxy)
+                content = await self.get(session,url)
                 ret = self.check_response_errors(content)
                 if not ret[0]:
                     self.deal_with_errors(ret[1])
@@ -136,5 +133,5 @@ class NetcraftEngine(Engine):
                     self.generate_query()
                 if len(self.queries)>0:
                     await self.should_sleep()# avoid being blocked
-                self.logger.debug("%s for %s: %d" %(self.engine_name ,self.target.netloc, len(self.subdomains)))
+                self.logger.debug("%s for %s: %d" %(self.engine_name ,self.target, len(self.results['subdomain'])))
 

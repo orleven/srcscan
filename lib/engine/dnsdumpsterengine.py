@@ -2,22 +2,23 @@
 # -*- coding: utf-8 -*-
 __author__ = 'orleven'
 
-import aiohttp
 import re
+import aiohttp
 from urllib import parse
+from random import randint
 from lib.data import logger
-from lib.engine.engine import ERROR
-from lib.engine.engine import Engine
+from lib.enums import SEARCH_ERROR
+from lib.engine.searchengine import SearchEngine
 
-class DNSdumpsterEngine(Engine):
+class DNSdumpsterEngine(SearchEngine):
 
-    def __init__(self,target,random=True,proxy=False):
+    def __init__(self,target,engine_name="DNSdumpster_Domain", **kwargs):
         self.max_pageno = 30
         self.engine = "https://dnsdumpster.com/"
         self.base_url = 'https://dnsdumpster.com/'
         self.find_new_domain = False
         super(DNSdumpsterEngine, self)\
-            .__init__(target, engine_name="DNSdumpster",random=random,proxy=proxy)
+            .__init__(target, engine_name=engine_name, **kwargs)
         self.headers['Origin'] = "https://dnsdumpster.com/"
         self.headers['Referer'] = "https://dnsdumpster.com/"
         self.headers['Content-Type'] = "application/x-www-form-urlencoded"
@@ -30,7 +31,7 @@ class DNSdumpsterEngine(Engine):
         if content:
             self.data = {
                 'csrfmiddlewaretoken': self.extract_csrf_token(content),
-                'targetip': self.target.netloc
+                'targetip': self.target
             }
             return True
         else:
@@ -48,29 +49,29 @@ class DNSdumpsterEngine(Engine):
 
     def extract(self,content):
         pattern = re.compile('<tr>\s*<td class=.*?>(.*?{domain})<br>'
-                   .format(domain=self.target.netloc))
+                   .format(domain=self.target))
         try:
             links = pattern.findall(content)
 
             for link in links:
-                if link not in self.subdomains:
+                if link not in self.results['subdomain']:
                     self.logger.info(
                         "{engine} Found {subdomain}".format(
                             engine=self.engine_name, subdomain=link))
-                    self.subdomains.update([link])
+                    self.results['subdomain'].append(link)
         except Exception:
             pass
 
     def check_response_errors(self,content):
         if not content:
-            return [False, ERROR.TIMEOUT]
+            return [False, SEARCH_ERROR.TIMEOUT]
 
         if "There was an error getting results" in content:
-            return [False,ERROR.END]
+            return [False,SEARCH_ERROR.END]
         elif "Showing results for" in content:
             return [True,0]
         else:
-            return [False,ERROR.UNKNOWN]
+            return [False,SEARCH_ERROR.UNKNOWN]
 
     async def run(self):
         async with aiohttp.ClientSession() as session:
@@ -84,13 +85,7 @@ class DNSdumpsterEngine(Engine):
 
             self.logger.debug("{engine} {url}".format(engine=self.engine_name,url=self.base_url))
 
-            content = await self.get(session,
-                                       self.base_url,
-                                       method='POST',
-                                       data=self.data,
-                                       headers=self.headers,
-                                       proxy=self.proxy,
-                                       timeout=50)
+            content = await self.get(session, self.base_url, method='POST', data=self.data)
 
             ret = self.check_response_errors(content)
             if not ret[0]:
@@ -98,4 +93,4 @@ class DNSdumpsterEngine(Engine):
 
             self.extract(content)
 
-            self.logger.debug(self.engine_name + " " + str(len(self.subdomains)))
+            self.logger.debug(self.engine_name + " " + str(len(self.results['subdomain'])))
