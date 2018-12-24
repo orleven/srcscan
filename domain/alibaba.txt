@@ -36,3 +36,4 @@ taobao.com
 alicdn.com
 alibaba.com
 aliexpress.com
+guoguo-app.com
