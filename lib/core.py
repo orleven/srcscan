@@ -69,6 +69,8 @@ def _run(domains_dic):
                 # loop.close()
                 ret = set()
                 for _engine in _engines:
+                    logger.sysinfo("{engine} Found {num} sites".format(engine=_engine.engine_name,
+                                                                       num=len(_engine.results['subdomain'])))
                     ret.update(_engine.results['subdomain'])
 
                 logger.sysinfo("Found %d subdomains of %s." % (len(ret),domain))

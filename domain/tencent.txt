@@ -340,15 +340,12 @@ hrcwelink.com
 tencentcs.com
 tencentgy.com
 qbanking.cn
-58.58.81.129
-122.5.0.129
 1700.cn
 gtgres.com
 iotwesim.com
 wesimiot.com
 lexiang-asset.com
 molo.cn
-140.249.28.0
 wegame.com.cn
 spark-page7.com
 devfeed.cn
@@ -440,7 +437,6 @@ tapd.com.cn
 zjump.cn
 opendatacenter.cn
 nokialumia.com.cn
-119.147.8.78
 wechatapp.com
 html5mark.com
 tencentyun.com
