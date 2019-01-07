@@ -88,8 +88,6 @@ tencentapps.com
 tos.cn
 weknow.io
 businessinchina.com.cn
-flzhan.com
-flzhan.cn
 magicwatchface.com
 tav-global.com
 tav-global.net
@@ -190,7 +188,6 @@ wxutil.com
 bkapigw.com
 qcloud.la
 wesingapp.com
-in.th
 tuicross.com
 yirgalab.com
 prizesapp.com
@@ -212,7 +209,6 @@ tcdnlp.com
 fypage.cn
 bjxingzheng.com
 tenovatech.com
-tencent.co.id
 dayugf.com
 wegamedesign.com
 oracle-on-qcloud.cn
