@@ -69,7 +69,7 @@ def init_conf(path):
         cf[section] = configs[section]
     with open(path, 'w+') as configfile:
         cf.write(configfile)
-    sys.exit(logger.error("Please set the tentacle config in tentacle.conf..."))
+    sys.exit(logger.error("Please set the tentacle config in submon.conf..."))
 
 def load_conf(path):
     logger.debug("Load tentacle config...")

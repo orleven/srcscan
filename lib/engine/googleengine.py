@@ -88,7 +88,7 @@ class GoogleEngine(SearchEngine):
             developer_key = conf['config']['google_api']['developer_key']
             search_enging = conf['config']['google_api']['search_enging']
         except KeyError:
-            self.logger.error("Load tentacle config error: google_api, please check the config in tentacle.conf，skipping!")
+            self.logger.error("Load submon config error: google_api, please check the config in tentacle.conf，skipping!")
             return
         async with aiohttp.ClientSession() as session:
             flag = await self.check_engine_available(session,self.engine)
