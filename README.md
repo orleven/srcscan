@@ -52,8 +52,8 @@ search_enging = search_enging   # Your search enging
 2. Scan subdomian,
 ```
 py -3 submon.py -d example.com
-py -3 submon.py -f file.text  # file path
-py -3 submon.py -f domain     # dir path
+py -3 submon.py -f file.text      # file path
+py -3 submon.py -f domain         # dir path, and you can add domain.txt in ./domain/
 py -3 submon.py -d example.com -n # by nomal model
 ```
 

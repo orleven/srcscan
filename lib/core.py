@@ -3,6 +3,8 @@
 __author__ = 'orleven'
 
 import os
+import sys
+import glob
 import socket
 import asyncio
 import schedule
@@ -18,6 +20,7 @@ from lib.data import conf
 from lib.curl import Curl
 from lib.common import tocsv
 from lib.database import Database
+from lib.common import check_domain
 from lib.engine.chinazengine import ChinazEngine
 from lib.engine.askengine import AskEngine
 from lib.engine.bingengine import BingEngine
@@ -46,11 +49,43 @@ engines = {
     'bugscanner': BugscannerEngine,
 }
 
+def run(target):
+    domains_dic = {}
+    if os.path.isdir(target):
+        domain_file_list = glob.glob(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), target, '*.*'))
+        for domain_file in domain_file_list:
+            domains_dic[os.path.basename(domain_file)] = []
+            logger.sysinfo("Loading and checking domains of file %s." % domain_file)
+            with open(domain_file, 'r') as f:
+                for domain in f.readlines():
+                    domain = check_domain(domain)
+                    if not domain:
+                        logger.error("Error domain: %s" % domain)
+                        continue
+                    domains_dic[os.path.basename(domain_file)].append(domain)
+    elif os.path.isfile(target):
+        domains_dic[os.path.basename(target)] = []
+        logger.sysinfo("Loading and checking domains of file %s." % target)
+        with open(target, 'r') as f:
+            for domain in f.readlines():
+                domain = check_domain(domain)
+                if not domain:
+                    logger.error("Error domain: %s" % domain)
+                    continue
+                domains_dic[os.path.basename(target)].append(domain)
+    elif check_domain(target):
+        logger.sysinfo("Loading and checking domain %s." % target)
+        domains_dic[target] = [target]
+    else:
+        sys.exit(logger.error("Error domain: %s" % target))
+    _run(domains_dic)
+
 def _run(domains_dic):
     database = Database(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'submon.db'))
     database.connect()
     database.init()
-    filename = ('SubMon_subdomain_check_' + time.strftime("%Y%m%d_%H%M%S", time.localtime())) + '.xlsx'
+    now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    filename = 'SubMon_subdomain_check_' + time.strftime("%Y%m%d_%H%M%S", time.localtime()) + '.xlsx'
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
     if not os.path.exists(path):
         os.makedirs(path)
@@ -59,7 +94,6 @@ def _run(domains_dic):
         if len(domains) > 0:
             logger.sysinfo("Scanning %d domains at %s." % (len(domains), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
             for domain in domains:
-                now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 logger.sysinfo("Scanning domain %s." % domain)
                 _engines = [_(domain) for _ in engines.values()]
                 loop = asyncio.get_event_loop()
@@ -74,6 +108,7 @@ def _run(domains_dic):
                                                                        num=len(_engine.results['subdomain'])))
                     ret.update(_engine.results['subdomain'])
 
+
                 logger.sysinfo("Found %d subdomains of %s." % (len(ret),domain))
                 for subdomain in ret:
                     database.insert_subdomain(subdomain,None,None,0,0,now_time,domain)
@@ -84,6 +119,7 @@ def _run(domains_dic):
                 for subdomain,url,title,status,content_length in curl.run():
                     database.update_subdomain_status(subdomain,url,title,status,content_length,now_time)
                 logger.sysinfo("Checked subdomains' status of %s." % domain)
+
             datas = []
             for domain in domains:
                 for _row in database.select_mondomain(domain):
@@ -106,15 +142,14 @@ def _run(domains_dic):
     print()
     print()
 
-def run(domains_dic,nomal):
-    _run(domains_dic)
+def start(target,nomal):
+    run(target)
     if not nomal:
-        if len(domains_dic) > 0:
-            _time =  int(conf['config']['basic']['looptimer'])
-            schedule.every(_time).seconds.do(_run,domains_dic)
-            while True:
-                schedule.run_pending()
-                time.sleep(1)
+        _time = int(conf['config']['basic']['looptimer'])
+        schedule.every(_time).seconds.do(run, target)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
 
 def send_smtp(path,filename):
     try:
@@ -149,7 +184,8 @@ def send_smtp(path,filename):
         att.add_header("Content-Disposition", "attachment", filename=("utf-8", "", filename))
         message.attach(att)
 
-    while True:
+    n = 3
+    while n > 0:
         try:
             socket.setdefaulttimeout(timeout)
             smtpObj = smtplib.SMTP_SSL()
@@ -165,3 +201,4 @@ def send_smtp(path,filename):
         except Exception as e:
             logger.error("Error for SMTP, please check SMTP' config in submon.conf.")
         time.sleep(10)
+        n -= 1

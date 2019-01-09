@@ -56,7 +56,7 @@ class Database(object):
         return self.execute("SELECT * FROM subdomain ORDER BY update_time DESC ")
 
     def select_mondomain(self,mon_domain):
-        return self.execute("SELECT * FROM subdomain WHERE mon_domain = ? ORDER BY update_time DESC " ,(mon_domain,))
+        return self.execute("SELECT * FROM subdomain WHERE mon_domain = ? AND status != 0 ORDER BY update_time DESC " ,(mon_domain,))
 
     # def select_like(self,subdomain):
     #     return self.execute("SELECT * FROM subdomain WHERE subdomain LIKE  ?" ,('%'+subdomain+'%',))
