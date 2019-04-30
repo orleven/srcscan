@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @author = 'orleven'
-
+import asyncio
 import random
 import backoff
 import aiohttp
@@ -51,7 +51,7 @@ class SearchEngine(object):
         self.pre_pageno = 0
         self.pre_query = ""
 
-    @backoff.on_exception(backoff.expo, TimeoutError, max_tries=3)
+    @backoff.on_exception(backoff.expo, (asyncio.TimeoutError,TimeoutError) , max_time=60)
     async def get(self, session, url, method='GET', **kwargs):
         """
         fetch online resource
@@ -68,7 +68,7 @@ class SearchEngine(object):
             headers['Referer'] = url
         headers['Accept-Charset'] = 'GB2312,utf-8;q=0.7,*;q=0.7'
         headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-        headers['Accept-Encoding'] = 'gzip, deflate, sdch, br'
+        headers['Accept-Encoding'] = 'gzip, deflate, sdch'
         if self.random_ip:
             headers['X-Forwarded-For'] = random_IP()
         if self.random_ua:
@@ -92,10 +92,13 @@ class SearchEngine(object):
                 return None
         except ClientConnectorError as e:
             return None
+        except asyncio.TimeoutError as e:
+            self.logger.error('Fetch exception: {e}, {u}'.format(e=get_safe_ex_string(e), u=url))
+            return None
         except Exception as e:
-            if type(e).__name__ != 'TimeoutError':
+            if type(e).__name__ not in ['asyncio.TimeoutError', 'TimeoutError']:
                 self.logger.error('Fetch exception: {e}, {u}'.format(e=get_safe_ex_string(e), u=url))
-                return None
+            return None
 
     def extract(self, content):
         """subclass override this function for extracting domain from response"""
