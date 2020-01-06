@@ -43,7 +43,7 @@ chrome_path = C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
 http_proxy = http://127.0.0.1:8080   # The proxy config for xray scan 
 https_proxy = https://127.0.0.1:8080 # The proxy config for xray scan 
 username = username # The proxy auth config for xray scan
-password = password # The proxy auth config for xray scanr
+password = password # The proxy auth config for xray scan
 
 
 [smtp]
