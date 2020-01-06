@@ -22,12 +22,12 @@ def random_IP():
 
 def banner():
     banner = """
-        _____         _     ___  ___
-       /  ___|       | |    |  \/  |
-       \ `--.  _   _ | |__  | .  . |  ___   _ __
-        `--. \| | | || '_ \ | |\/| | / _ \ | '_ \\
-       /\__/ /| |_| || |_) || |  | || (_) || | | |  version: 1.0
-       \____/  \__,_||_.__/ \_|  |_/ \___/ |_| |_|  author: @orleven
+         ___________  _____   _____                 
+        /  ___| ___ \/  __ \ /  ___|                
+        \ `--.| |_/ /| /  \/ \ `--.  ___ __ _ _ __  
+         `--. \    / | |      `--. \/ __/ _` | '_ \ 
+        /\__/ / |\ \ | \__/\ /\__/ / (_| (_| | | | |   version: 1.0
+        \____/\_| \_| \____/ \____/ \___\__,_|_| |_|   author: @orleven     
 
 """
     print(banner)
@@ -70,7 +70,7 @@ def get_safe_ex_string(ex, encoding=None):
     # return getUnicode(retVal or "", encoding=encoding).strip()
 
 def config_parser():
-    path = os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'submon.conf'))
+    path = os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'srcscan.conf'))
     if not os.path.exists(path):
         init_conf(path)
     load_conf(path)

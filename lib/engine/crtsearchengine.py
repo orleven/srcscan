@@ -3,10 +3,7 @@
 __author__ = 'orleven'
 
 import re
-import aiohttp
-from urllib import parse
-from random import randint
-from lib.data import logger
+from lib.connect import ClientSession
 from lib.enums import SEARCH_ERROR
 from lib.engine.searchengine import SearchEngine
 
@@ -51,7 +48,7 @@ class CrtSearchEngine(SearchEngine):
 
     async def run(self):
 
-        async with aiohttp.ClientSession() as session:
+        async with ClientSession() as session:
             flag = await self.check_engine_available(session,self.engine)
             if not flag:
                 self.logger.error("{engine_name} is not available, skipping!"
@@ -64,13 +61,18 @@ class CrtSearchEngine(SearchEngine):
 
             self.logger.debug("{engine} {url}".format(engine=self.engine_name,url=url))
 
-            content = await self.get(session, url)
+            async with session.get(url, proxy=self.proxy) as res:
+                if res != None:
+                    try:
+                        content = await res.text()
+                    except:
+                        content = ''
 
-            ret = self.check_response_errors(content)
-            if not ret[0]:
-                self.deal_with_errors(ret[1])
-                return
-            self.extract(content)
+                    ret = self.check_response_errors(content)
+                    if not ret[0]:
+                        self.deal_with_errors(ret[1])
+                        return
+                    self.extract(content)
 
     def deal_with_errors(self,error_code):
         """subclass should override this function for identify security mechanism"""

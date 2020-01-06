@@ -6,7 +6,6 @@ import re
 import asyncio
 from urllib import parse
 from random import randint
-from lib.data import logger
 from lib.enums import SEARCH_ERROR
 from lib.engine.searchengine import SearchEngine
 class YahooEngine(SearchEngine):

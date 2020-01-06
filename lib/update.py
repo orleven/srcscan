@@ -13,18 +13,18 @@ from lib.data import logger
 
 
 def update_program():
-    git_repository = "https://github.com/orleven/submon.git"
+    git_repository = "https://github.com/orleven/srcscan.git"
     success = False
     path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if not os.path.exists(os.path.join(path, ".git")):
-        msg = "Have not a git repository. Please checkout the 'submon' repository "
-        msg += "from GitHub (e.g. 'git clone --depth 1 https://github.com/orleven/submon.git submon')"
+        msg = "Have not a git repository. Please checkout the 'srcscan' repository "
+        msg += "from GitHub (e.g. 'git clone --depth 1 https://github.com/orleven/srcscan.git srcscan')"
         logger.error(msg)
     else:
-        msg = "Updating submon to the latest version from the gitHub repository."
+        msg = "Updating srcscan to the latest version from the gitHub repository."
         logger.sysinfo(msg)
 
-        msg = "The submon will try to update itself using 'git' command."
+        msg = "The srcscan will try to update itself using 'git' command."
         logger.sysinfo(msg)
 
         logger.sysinfo("Update in progress.")
@@ -45,8 +45,8 @@ def update_program():
         logger.success("The latest revision '%s'" % (get_revision_number()))
     else:
         if "Not a git repository" in stderr:
-            msg = "Not a valid git repository. Please checkout the 'orleven/submon' repository "
-            msg += "from GitHub (e.g. 'git clone --depth 1 https://github.com/orleven/submon.git submon')"
+            msg = "Not a valid git repository. Please checkout the 'orleven/srcscan' repository "
+            msg += "from GitHub (e.g. 'git clone --depth 1 https://github.com/orleven/srcscan.git srcscan')"
             logger.error(msg)
         else:
             logger.error("Update could not be completed ('%s')" % re.sub(r"\W+", " ", stderr).strip())
@@ -57,7 +57,7 @@ def update_program():
             msg += "to use a GitHub for Windows client for updating "
             msg += "purposes (http://windows.github.com/) or just "
             msg += "download the latest snapshot from "
-            msg += "https://github.com/orleven/submon"
+            msg += "https://github.com/orleven/srcscan"
         else:
             msg = "For Linux platform it's required "
             msg += "to install a standard 'git' package (e.g.: 'sudo apt-get install git')"

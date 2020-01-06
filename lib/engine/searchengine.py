@@ -1,20 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @author = 'orleven'
-import asyncio
-import random
-import backoff
-import aiohttp
-import async_timeout
+
 from collections import deque
 from lib.data import conf
-from lib.common import random_IP
+from lib.connect import ClientSession
 from lib.data import logger
 from lib.enums import SEARCH_ERROR
-from lib.enums import USER_AGENTS
-from lib.common import get_safe_ex_string
-from aiohttp.client_exceptions import TooManyRedirects
-from aiohttp.client_exceptions import ClientConnectorError
+
 
 class SearchEngine(object):
     '''
@@ -41,64 +34,15 @@ class SearchEngine(object):
         self.results = {'subdomain':[], 'dns_domain': [], 'cdn_ip': []}
         self.queries = deque()
         self.timeout = timeout
-        if conf['config']['proxy']['proxy'].lower() == 'true':
+        if conf['config']['domain']['proxy'].lower() == 'true':
             try:
-                proxy = conf['config']['proxy']['http_proxy']
+                proxy = conf['config']['domain']['http_proxy']
             except:
                 logger.error("Error http(s) proxy: %s or %s." % (
-                    conf['config']['proxy']['http_proxy'], conf['config']['proxy']['https_proxy']))
+                    conf['config']['domain']['http_proxy'], conf['config']['domain']['https_proxy']))
         self.proxy = proxy
         self.pre_pageno = 0
         self.pre_query = ""
-
-    @backoff.on_exception(backoff.expo, (asyncio.TimeoutError,TimeoutError) , max_time=60)
-    async def get(self, session, url, method='GET', **kwargs):
-        """
-        fetch online resource
-        :param session: aiohttp session
-        :param url: like http://baidu.com/s?
-        :param headers: use normal http headers to fetch online resource
-        :param proxy: proxy url
-        :return: online resource content
-        """
-        headers = kwargs.get('headers')
-        if headers == None:
-            headers = self.headers
-        if 'Referer' not in headers.keys():
-            headers['Referer'] = url
-        headers['Accept-Charset'] = 'GB2312,utf-8;q=0.7,*;q=0.7'
-        headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-        headers['Accept-Encoding'] = 'gzip, deflate, sdch'
-        if self.random_ip:
-            headers['X-Forwarded-For'] = random_IP()
-        if self.random_ua:
-            headers["User-Agent"] = random.choice(USER_AGENTS)
-        kwargs.setdefault('headers', headers)
-        kwargs.setdefault('timeout', self.timeout)
-        # kwargs.setdefault('verify', False)
-        kwargs.setdefault('proxy', self.proxy)
-
-        try:
-            async with async_timeout.timeout(self.timeout):
-                async with session.request(method, url, **kwargs) as response:
-                    return await response.text()
-        except TooManyRedirects as e:
-            kwargs.setdefault('allow_redirects', False)
-            try:
-                async with async_timeout.timeout(self.timeout):
-                    async with session.request(method, url, **kwargs) as response:
-                        return await response.text()
-            except:
-                return None
-        except ClientConnectorError as e:
-            return None
-        except asyncio.TimeoutError as e:
-            self.logger.error('Fetch exception: {e}, {u}'.format(e=get_safe_ex_string(e), u=url))
-            return None
-        except Exception as e:
-            if type(e).__name__ not in ['asyncio.TimeoutError', 'TimeoutError']:
-                self.logger.error('Fetch exception: {e}, {u}'.format(e=get_safe_ex_string(e), u=url))
-            return None
 
     def extract(self, content):
         """subclass override this function for extracting domain from response"""
@@ -138,12 +82,11 @@ class SearchEngine(object):
         return [True,0]
 
     async def check_engine_available(self, session, engine):
-
-        content = await self.get(session,engine)
-        if content:
-            return True
-        else:
-            return False
+        async with session.get(engine, proxy=self.proxy) as response:
+            if response != None:
+                return True
+            else:
+                return False
 
     def deal_with_errors(self, error_code):
         """
@@ -159,7 +102,7 @@ class SearchEngine(object):
 
 
     async def run(self):
-        async with aiohttp.ClientSession() as session:
+        async with ClientSession() as session:
             flag = await self.check_engine_available(session, self.engine)
             if not flag:
                 self.logger.error("{engine_name} is not available, skipping!" .format(engine_name=self.engine_name))
@@ -174,13 +117,19 @@ class SearchEngine(object):
                 url = self.format_base_url(query, self.pre_pageno)
 
                 self.logger.debug("{engine}: {url}".format(engine=self.engine_name, url=url))
-                content = await self.get(session, url)
-                ret = self.check_response_errors(content)
-                if not ret[0]:
-                    self.deal_with_errors(ret[1])
-                    break
+                async with session.get(url,proxy=self.proxy) as res:
+                    if res!=None:
+                        try:
+                            content = await res.text()
+                        except:
+                            content = ""
 
-                if self.extract(content):
-                    self.generate_query()
+                        ret = self.check_response_errors(content)
+                        if not ret[0]:
+                            self.deal_with_errors(ret[1])
+                            break
+                        if self.extract(content):
+                            self.generate_query()
+
                 if len(self.queries) > 0:
                     await self.should_sleep()  # avoid being blocked

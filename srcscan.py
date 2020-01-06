@@ -21,8 +21,9 @@ except ImportError:
 
 def arg_set(parser):
     parser.add_argument('-d', "--domain", metavar='Domain', type=str, default=None, help='Set domain to scan')
-    parser.add_argument('-n', "--nomal", action='store_true', help="Nomal model", default=False)
-    parser.add_argument('-f', "--domain_file",metavar='File', type=str, default=None,help='Load domain from file (e.g. domains.txt)')
+    parser.add_argument('-df', "--domain_file",metavar='DomainFile', type=str, default=None,help='Load domain from file (e.g. domains.txt)')
+    parser.add_argument('-ss', "--scheduled_scan", action='store_true', help="scheduled scan", default=False)
+    parser.add_argument('-vs', "--vul_scan", action='store_true', help="Vul Scan", default=False)
     parser.add_argument("--debug", action='store_true', help="Show debug info", default=False)
     parser.add_argument("--update", action='store_true', help="Update", default=False)
     parser.add_argument("--help", help="Show help", default=False, action='store_true')
@@ -35,20 +36,18 @@ def handle(parser):
     config_parser()
     # asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     if args.debug:
-        debug = True
         logger.set_level(CUSTOM_LOGGING.DEBUG)
-    nomal = args.nomal
     if args.help:
         parser.print_help()
     elif args.domain:
-        start(args.domain, nomal)
+        start(args.domain, args.scheduled_scan, args.vul_scan)
     elif args.domain_file:
-        start(args.domain_file, nomal)
+        start(args.domain_file, args.scheduled_scan, args.vul_scan)
     else:
         parser.print_help()
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='Submon is a SRC assistant tool that periodically scans subdomains and requests WEB services on port 80/443 to check if it is available, and send result to you by e-mail.',formatter_class=argparse.RawTextHelpFormatter, add_help=False)
+    parser = argparse.ArgumentParser(description='SRCScan is a SRC assistant tool that periodically scans subdomains and requests WEB services on port 80/443 to check if it is available, and send result to you by e-mail.',formatter_class=argparse.RawTextHelpFormatter, add_help=False)
     parser = arg_set(parser)
     handle(parser)
 

@@ -3,10 +3,7 @@
 __author__ = 'orleven'
 
 import re
-import aiohttp
-from urllib import parse
-from random import randint
-from lib.data import logger
+from lib.connect import ClientSession
 from lib.enums import SEARCH_ERROR
 from lib.engine.searchengine import SearchEngine
 
@@ -24,18 +21,20 @@ class DNSdumpsterEngine(SearchEngine):
         self.headers['Content-Type'] = "application/x-www-form-urlencoded"
 
     async def check_engine_available(self,session,engine):
-        content = await self.get(session,
-                                 engine,
-                                 headers=self.headers,
-                                 proxy=self.proxy)
-        if content:
-            self.data = {
-                'csrfmiddlewaretoken': self.extract_csrf_token(content),
-                'targetip': self.target
-            }
-            return True
-        else:
-            return False
+        async with session.get(engine, proxy=self.proxy) as response:
+            if response != None:
+                try:
+                    content = await response.text()
+                except:
+                    content = ""
+                self.data = {
+                    'csrfmiddlewaretoken': self.extract_csrf_token(content),
+                    'targetip': self.target
+                }
+                return True
+            else:
+                return False
+
 
     def extract_csrf_token(self,content):
         pattern = re.compile('<input type=\'hidden\' name=\'csrfmiddlewaretoken\' value=\'(.*?)\'')
@@ -74,7 +73,7 @@ class DNSdumpsterEngine(SearchEngine):
             return [False,SEARCH_ERROR.UNKNOWN]
 
     async def run(self):
-        async with aiohttp.ClientSession() as session:
+        async with ClientSession() as session:
             flag = await self.check_engine_available(session,self.engine)
             if not flag:
                 self.logger.error("{engine_name} is not available, skipping!"
@@ -84,13 +83,16 @@ class DNSdumpsterEngine(SearchEngine):
                              .format(engine_name=self.engine_name))
 
             self.logger.debug("{engine} {url}".format(engine=self.engine_name,url=self.base_url))
+            async with session.post(self.base_url, proxy=self.proxy, data=self.data) as res:
+                if res != None:
+                    try:
+                        content = await res.text()
+                    except:
+                        content = ""
+                    ret = self.check_response_errors(content)
+                    if not ret[0]:
+                        self.deal_with_errors(ret[1])
 
-            content = await self.get(session, self.base_url, method='POST', data=self.data)
+                    self.extract(content)
 
-            ret = self.check_response_errors(content)
-            if not ret[0]:
-                self.deal_with_errors(ret[1])
-
-            self.extract(content)
-
-            self.logger.debug(self.engine_name + " " + str(len(self.results['subdomain'])))
+                    self.logger.debug(self.engine_name + " " + str(len(self.results['subdomain'])))

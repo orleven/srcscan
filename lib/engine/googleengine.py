@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 __author__ = 'orleven'
 
-import re
 import json
 import asyncio
-import aiohttp
+from lib.connect import ClientSession
 from urllib import parse
 from random import randint
 from lib.data import logger
@@ -88,9 +87,9 @@ class GoogleEngine(SearchEngine):
             developer_key = conf['config']['google_api']['developer_key']
             search_enging = conf['config']['google_api']['search_enging']
         except KeyError:
-            self.logger.error("Load submon config error: google_api, please check the config in tentacle.conf，skipping!")
+            self.logger.error("Load srcscan config error: google_api, please check the config in tentacle.conf，skipping!")
             return
-        async with aiohttp.ClientSession() as session:
+        async with ClientSession() as session:
             flag = await self.check_engine_available(session,self.engine)
             if not flag:
                 self.logger.error("{engine_name} is not available, skipping!"
@@ -107,14 +106,19 @@ class GoogleEngine(SearchEngine):
                 url = self.format_base_url(query, self.pre_pageno, search_enging, developer_key)
                 self.logger.debug("{engine} {url}".format(engine=self.engine_name, url=url))
 
-                content = await self.get(session, url)
-                ret = self.check_response_errors(content)
-                if not ret[0]:
-                    self.deal_with_errors(ret[1])
-                    break
+                async with session.get(url, proxy=self.proxy) as res:
+                    if res != None:
+                        try:
+                            content = await res.text()
+                        except:
+                            content = ''
+                        ret = self.check_response_errors(content)
+                        if not ret[0]:
+                            self.deal_with_errors(ret[1])
+                            break
 
-                if self.extract(content):
-                    self.generate_query()
-                if len(self.queries) > 0:
-                    await self.should_sleep()  # avoid being blocked
-                self.logger.debug("%s for %s: %d" % (self.engine_name, self.target, len(self.results['subdomain'])))
+                        if self.extract(content):
+                            self.generate_query()
+                        if len(self.queries) > 0:
+                            await self.should_sleep()  # avoid being blocked
+                        self.logger.debug("%s for %s: %d" % (self.engine_name, self.target, len(self.results['subdomain'])))

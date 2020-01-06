@@ -5,7 +5,7 @@ __author__ = 'orleven'
 import re
 import asyncio
 import execjs
-import aiohttp
+from lib.connect import ClientSession
 from yarl import URL
 from urllib import parse
 from random import randint
@@ -92,26 +92,32 @@ class NetcraftEngine(SearchEngine):
 
     async def run(self):
         # cookies = {'netcraft_js_verification_response': ''}
-        async with aiohttp.ClientSession() as session:
-            flag = await self.get(session,self.engine)
-            if not flag:
-                self.logger.error("{engine_name} is not available, skipping!"
-                                  .format(engine_name=self.engine_name))
-                return
-            self.logger.debug("{engine_name} is available, starting!"
-                             .format(engine_name=self.engine_name))
+        async with ClientSession() as session:
+            async with session.get(self.engine, proxy=self.proxy) as res:
+                if res!=None:
+                    self.logger.error("{engine_name} is not available, skipping!"
+                                      .format(engine_name=self.engine_name))
+                    return
+                self.logger.debug("{engine_name} is available, starting!"
+                                 .format(engine_name=self.engine_name))
             try:
                 filtered = session.cookie_jar.filter_cookies(self.engine)
                 netcraft_js_verification_challenge = filtered['netcraft_js_verification_challenge'].value
-                _js = await self.get(session,self.js_url)
-                cont_js = (_js + self.js_function.replace("{{netcraft_js_verification_challenge}}",netcraft_js_verification_challenge))
-                s = execjs.compile(cont_js)
-                netcraft_js_verification_response = s.call('get_netcraft_js_verification_response')
-                cookies = {
-                    'netcraft_js_verification_challenge':netcraft_js_verification_challenge,
-                    'netcraft_js_verification_response': netcraft_js_verification_response
-                }
-                session.cookie_jar.update_cookies(cookies,URL(self.engine))
+
+                async with session.get(self.js_url, proxy=self.proxy) as res:
+                    if res != None:
+                        try:
+                            _js = await res.text()
+                        except:
+                            return
+                        cont_js = (_js + self.js_function.replace("{{netcraft_js_verification_challenge}}",netcraft_js_verification_challenge))
+                        s = execjs.compile(cont_js)
+                        netcraft_js_verification_response = s.call('get_netcraft_js_verification_response')
+                        cookies = {
+                            'netcraft_js_verification_challenge':netcraft_js_verification_challenge,
+                            'netcraft_js_verification_response': netcraft_js_verification_response
+                        }
+                        session.cookie_jar.update_cookies(cookies,URL(self.engine))
             except:
                 self.logger.error("{engine_name} is not available, skipping!".format(engine_name=self.engine_name))
                 return
@@ -123,15 +129,21 @@ class NetcraftEngine(SearchEngine):
                 self.pre_query = query
                 url = self.format_base_url(query,self.pre_pageno)
                 self.logger.debug("{engine} {url}".format(engine=self.engine_name,url=url))
-                content = await self.get(session,url)
-                ret = self.check_response_errors(content)
-                if not ret[0]:
-                    self.deal_with_errors(ret[1])
-                    break
+                async with session.get(url, proxy=self.proxy) as res:
+                    if res != None:
+                        try:
+                            content = await res.text()
+                        except:
+                            content = ''
 
-                if self.extract(content):
-                    self.generate_query()
-                if len(self.queries)>0:
-                    await self.should_sleep()# avoid being blocked
-                self.logger.debug("%s for %s: %d" %(self.engine_name ,self.target, len(self.results['subdomain'])))
+                        ret = self.check_response_errors(content)
+                        if not ret[0]:
+                            self.deal_with_errors(ret[1])
+                            break
+
+                        if self.extract(content):
+                            self.generate_query()
+                        if len(self.queries)>0:
+                            await self.should_sleep()# avoid being blocked
+                        self.logger.debug("%s for %s: %d" %(self.engine_name ,self.target, len(self.results['subdomain'])))
 

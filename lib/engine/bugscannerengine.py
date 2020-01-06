@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 __author__ = 'orleven'
 
-import re
 import json
 import aiohttp
-from urllib import parse
-from random import randint
 from lib.data import logger
 from lib.enums import SEARCH_ERROR
 from lib.engine.searchengine import SearchEngine
@@ -52,18 +49,18 @@ class BugscannerEngine(SearchEngine):
             data = {
                 'inputurl':self.target
             }
-            content = await self.get(session,
-                                       self.base_url,
-                                       method="POST",
-                                       data=data,
-                                       headers=self.headers,
-                                       timeout=self.timeout,
-                                       proxy=self.proxy)
+            async with session.post(self.base_url, proxy=self.proxy, data=data) as res:
+                if res != None:
+                    try:
+                        content = await res.text()
+                    except:
+                        content = ""
 
-            ret = self.check_response_errors(content)
-            if not ret[0]:
-                self.deal_with_errors(ret[1])
+                    ret = self.check_response_errors(content)
+                    if not ret[0]:
+                        self.deal_with_errors(ret[1])
 
-            self.extract(content)
+                    self.extract(content)
+
             logger.sysinfo("{engine} Found {num} sites".format(engine=self.engine_name,num=len(self.results['subdomain'])))
             logger.debug(self.engine_name + " " + str(len(self.results['subdomain'])))

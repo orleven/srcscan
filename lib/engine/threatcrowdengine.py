@@ -6,10 +6,8 @@ import re
 import json
 import asyncio
 import execjs
-import aiohttp
-from urllib import parse
+from lib.connect import ClientSession
 from random import randint
-from lib.data import logger
 from lib.enums import SEARCH_ERROR
 from lib.engine.searchengine import SearchEngine
 
@@ -84,19 +82,19 @@ class ThreatCrowdEngine(SearchEngine):
 
 
     async def check_engine_available(self,session,engine):
-        content = await self.get(session, engine)
-        if content:
-            try:
-                self.extract_pass(content)
-                return self.engine + self.params
-            except:
-                return None
-        else:
-            return None
-
+        async with session.get(engine) as response:
+            if response != None:
+                try:
+                    content = await response.text()
+                    if content:
+                        self.extract_pass(content)
+                        return self.engine + self.params
+                except:
+                   pass
+        return None
 
     async def run(self):
-        async with aiohttp.ClientSession() as session:
+        async with ClientSession() as session:
             url = self.format_base_url(self.target)
             url = await self.check_engine_available(session,url)
             if not url:
@@ -107,13 +105,18 @@ class ThreatCrowdEngine(SearchEngine):
                              .format(engine_name=self.engine_name))
             await self.should_sleep()
             self.logger.debug("{engine} {url}".format(engine=self.engine_name,url=url))
-            content = await self.get(session, url)
+            async with session.get(url, proxy=self.proxy) as res:
+                if res != None:
+                    try:
+                        content = await res.text()
+                    except:
+                        content = ''
 
 
-            ret = self.check_response_errors(content)
-            if not ret[0]:
-                self.deal_with_errors(ret[1])
-                return
+                    ret = self.check_response_errors(content)
+                    if not ret[0]:
+                        self.deal_with_errors(ret[1])
+                        return
 
-            self.extract(content)
-            self.logger.debug(self.engine_name + " " + str(len(self.results['subdomain'])))
+                    self.extract(content)
+                    self.logger.debug(self.engine_name + " " + str(len(self.results['subdomain'])))

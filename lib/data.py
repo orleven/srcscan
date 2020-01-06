@@ -4,7 +4,7 @@ __author__ = 'orleven'
 
 from lib.log import logger
 
-logger =  logger()
+logger = logger()
 conf = {}
 debug = False
 looptimer = None

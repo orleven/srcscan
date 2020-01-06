@@ -24,15 +24,11 @@ youku.com
 fliggy.com
 cainiao.com
 dingtalk.com
-9apps.com
 etao.com
-1688.com
 alibabagroup.com
 alibaba-inc.com
 alimama.com
 aliyun.com
-tmall.com
-taobao.com
 alicdn.com
 alibaba.com
 aliexpress.com

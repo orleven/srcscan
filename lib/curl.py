@@ -34,6 +34,9 @@ class Curl():
         for target in targets:
             self.targets.append(target)
 
+    def clear_targets(self):
+        self.targets.clear()
+
     def run(self):
         thread_list = []
         for i in range(0, self.thread_num):
