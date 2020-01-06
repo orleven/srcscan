@@ -38,7 +38,7 @@ http_proxy = http://127.0.0.1:1080 # The proxy config for sub domian scan
 https_proxy = https://127.0.0.1:1080 # The proxy config for sub domian scan 
 
 [crawlergo]
-crawlergo_path = C:\Soft\MyTools\submon\tools\crawlergo_windows_amd64\crawlergo
+crawlergo_path = C:\Soft\MyTools\srcscan\tools\crawlergo_windows_amd64\crawlergo
 chrome_path = C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
 http_proxy = http://127.0.0.1:8080   # The proxy config for xray scan 
 https_proxy = https://127.0.0.1:8080 # The proxy config for xray scan 
@@ -62,7 +62,7 @@ https_proxy = https://127.0.0.1:1080
 ...
 ```
 
-2 Scan 
+2. Scan 
 
 2.1 Scan subdomain
 
@@ -73,15 +73,15 @@ py -3 srcscan.py -df domain         # dir path, and you can add domain.txt in ./
 py -3 srcscan.py -d example.com -ss # by nomal model
 ```
 
-2.2 Scan subdomain and scan url and scan vul for xray 
+2.2 Scan subdomain, url and vul 
 
-2.2.1 Start running xray
+2.2.1. Start running xray
 
 ```ssh
 nohup ./xray_linux_amd64 webscan  --listen 0.0.0.0:8000  --html-output proxy.html & 
 ```
 
-2.2.2 Start running srcscan.py.
+2.2.2. Start running srcscan.py
 
 ```
 py -3 srcscan.py -df domain -ss -vs # dir path, and you can add domain.txt in ./domain/
